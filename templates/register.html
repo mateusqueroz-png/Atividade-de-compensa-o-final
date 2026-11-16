@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Criar conta{% endblock %}
+{% block content %}
+<h1>Criar conta</h1>
+<form method="post">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <label for="name">Nome</label>
+  <input id="name" name="name" maxlength="80" required autocomplete="name">
+  <label for="email">E-mail</label>
+  <input id="email" name="email" type="email" maxlength="254" required autocomplete="username">
+  <label for="password">Senha (mínimo 8, com letras e números)</label>
+  <input id="password" name="password" type="password" minlength="8" maxlength="128" required autocomplete="new-password">
+  <p><button>Criar conta</button></p>
+</form>
+{% endblock %}
