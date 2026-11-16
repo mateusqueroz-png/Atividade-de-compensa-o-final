@@ -137,3 +137,23 @@ def login():
 def logout():
     session.clear()
     return redirect(url_for("login"))
+
+
+# ---------- tarefas ----------
+def get_my_task(task_id):
+    """Busca a tarefa SOMENTE se for do usuário logado (evita acessar tarefa alheia)."""
+    task = get_db().execute(
+        "SELECT * FROM tasks WHERE id = ? AND user_id = ?",
+        (task_id, session["user_id"])).fetchone()
+    if task is None:
+        abort(404)
+    return task
+
+
+@app.route("/")
+@login_required
+def index():
+    tasks = get_db().execute(
+        "SELECT * FROM tasks WHERE user_id = ? ORDER BY done, id DESC",
+        (session["user_id"],)).fetchall()
+    return render_template("tasks.html", tasks=tasks)
