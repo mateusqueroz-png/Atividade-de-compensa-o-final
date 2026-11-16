@@ -113,3 +113,27 @@ def register():
                 error = "Não foi possível criar a conta com esses dados."
         flash(error, "erro")
     return render_template("register.html")
+
+
+# ---------- login / logout ----------
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        email = request.form.get("email", "").strip().lower()
+        password = request.form.get("password", "")
+        user = get_db().execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
+
+        if user and check_password_hash(user["password_hash"], password):
+            session.clear()                 # evita session fixation
+            session.permanent = True        # expira em 30 min
+            session["user_id"] = user["id"]
+            session["user_name"] = user["name"]
+            return redirect(url_for("index"))
+        flash("E-mail ou senha inválidos.", "erro")  # mesma mensagem para qualquer falha
+    return render_template("login.html")
+
+
+@app.route("/logout", methods=["POST"])  # só POST (com token CSRF)
+def logout():
+    session.clear()
+    return redirect(url_for("login"))
