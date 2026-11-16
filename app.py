@@ -157,3 +157,66 @@ def index():
         "SELECT * FROM tasks WHERE user_id = ? ORDER BY done, id DESC",
         (session["user_id"],)).fetchall()
     return render_template("tasks.html", tasks=tasks)
+
+
+def read_task_form():
+    title = request.form.get("title", "").strip()
+    description = request.form.get("description", "").strip()
+    if not 1 <= len(title) <= 120:
+        return None, None, "O título deve ter entre 1 e 120 caracteres."
+    if len(description) > 500:
+        return None, None, "A descrição pode ter no máximo 500 caracteres."
+    return title, description, None
+
+
+@app.route("/tasks/new", methods=["GET", "POST"])
+@login_required
+def create():
+    if request.method == "POST":
+        title, description, error = read_task_form()
+        if error is None:
+            # user_id vem da sessão, nunca do formulário
+            get_db().execute("INSERT INTO tasks (user_id, title, description) VALUES (?, ?, ?)",
+                             (session["user_id"], title, description))
+            get_db().commit()
+            return redirect(url_for("index"))
+        flash(error, "erro")
+    return render_template("form.html", task=None)
+
+
+@app.route("/tasks/<int:task_id>/edit", methods=["GET", "POST"])
+@login_required
+def edit(task_id):
+    task = get_my_task(task_id)
+    if request.method == "POST":
+        title, description, error = read_task_form()
+        if error is None:
+            get_db().execute("UPDATE tasks SET title = ?, description = ? WHERE id = ? AND user_id = ?",
+                             (title, description, task_id, session["user_id"]))
+            get_db().commit()
+            return redirect(url_for("index"))
+        flash(error, "erro")
+    return render_template("form.html", task=task)
+
+
+@app.route("/tasks/<int:task_id>/toggle", methods=["POST"])
+@login_required
+def toggle(task_id):
+    get_my_task(task_id)
+    get_db().execute("UPDATE tasks SET done = 1 - done WHERE id = ? AND user_id = ?",
+                     (task_id, session["user_id"]))
+    get_db().commit()
+    return redirect(url_for("index"))
+
+
+@app.route("/tasks/<int:task_id>/delete", methods=["POST"])
+@login_required
+def delete(task_id):
+    get_my_task(task_id)
+    get_db().execute("DELETE FROM tasks WHERE id = ? AND user_id = ?", (task_id, session["user_id"]))
+    get_db().commit()
+    return redirect(url_for("index"))
+
+
+if __name__ == "__main__":
+    app.run(host="127.0.0.1", port=5000)

@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Editar' if task else 'Nova' }} tarefa{% endblock %}
+{% block content %}
+<h1>{{ 'Editar' if task else 'Nova' }} tarefa</h1>
+<form method="post">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <label for="title">Título</label>
+  <input id="title" name="title" maxlength="120" required value="{{ request.form.get('title', task['title'] if task else '') }}">
+  <label for="description">Descrição (opcional)</label>
+  <textarea id="description" name="description" maxlength="500">{{ request.form.get('description', task['description'] if task else '') }}</textarea>
+  <p><button>Salvar</button> <a href="{{ url_for('index') }}">Cancelar</a></p>
+</form>
+{% endblock %}
